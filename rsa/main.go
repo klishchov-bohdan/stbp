@@ -75,7 +75,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(plaintext))
+	fmt.Println("RSA standard package plaintext:", string(plaintext))
 }
 
 func applyPubEPriD() error {
@@ -83,7 +83,6 @@ func applyPubEPriD() error {
 	if err != nil {
 		return err
 	}
-
 	pridecrypt, err := rsa.PriKeyDecrypt(pubenctypt, PriKey)
 	if err != nil {
 		return err
@@ -91,6 +90,7 @@ func applyPubEPriD() error {
 	if pridecrypt != msg {
 		return errors.New(`Decryption failed`)
 	}
+	fmt.Println("RSA custom package plaintext:", pridecrypt)
 	return nil
 }
 
