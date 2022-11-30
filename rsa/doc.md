@@ -1,54 +1,127 @@
-# Лабораторна робота №2
-## Симетричне шифрування. Алгоритм AES
+# Лабораторна робота №3
+## Асиметричне шифрування. Алгоритм RSA
 ##### Роботу виконав
 - Кліщов Богдан
 - КН-922б
-##### Мета: Дослідити принципи роботи симетричного шифрування на прикладі алгоритму AES
+##### Мета: Дослідити і реалізувати механізм асиметричного алгоритму шифрування RSA
 ##### Завдання:
-- Реалізувати алгоритм симетричного шифрування AES (будь-якої версії - 128 або 256).
-- Довести коректність роботи реалізованого алгоритму шляхом порівняння результатів з існуючими реалізаціями (напр. сайтом-утилітою https://cryptii.com).
+Розробити додаток обміну таємними посиланнями між двома клієнтами за допомогою алгоритму шифрування RSA
+- Реалізувати алгоритм генерації ключів (public / private keys) для алгоритму RSA. Створити ключі заданої довжини (напр. 1024 біт)
+- Реалізувати та продемонструвати роботу алгоритму шифрування та дешифрування повідомлення RSA
+- Підтвердити роботу реалізованого алгоритму шляхом порівняння результату кодування з існуючим алгоритмом (наприклад, використовуючи утиліту openssl або вбудовані системи шифрування обраної мови програмування)
 
-##### Розроблені функції шифрування та розшифровки:
 
-    func (a *AES) EncryptCTR(in []byte, iv []byte) []byte {
-        ivTmp := make([]byte, len(iv))
-        copy(ivTmp, iv)
-        plainTmp := make([]byte, len(in))
-        copy(plainTmp, in)
-        ivNumber := big.NewInt(0).SetBytes(iv)
-        one := big.NewInt(1)
-    
-        i := 0
-        for ; i < len(plainTmp)-a.len; i += a.len {
-            a.encryptBlock(ivTmp, a.roundKeys)
-            Xor(plainTmp[i:i+a.len], ivTmp)
-            ivNumber.Add(ivNumber, one).FillBytes(ivTmp)
+##### Розроблені функції отримання ключів, шифрування та розшифровки:
+
+    func (rsas *RSASecurity) PubKeyENCTYPT(input []byte) ([]byte, error) {
+        if rsas.pubkey == nil {
+            return []byte(""), errors.New(`Please set the public key in advance`)
         }
-        a.encryptBlock(ivTmp, a.roundKeys)
-        Xor(plainTmp[i:], ivTmp)
-
-        return plainTmp
-    }
-    
-    func (a *AES) DecryptCTR(in []byte, iv []byte) []byte {
-        ivTmp := make([]byte, len(iv))
-        copy(ivTmp, iv)
-        cipherTmp := make([]byte, len(in))
-        copy(cipherTmp, in)
-        ivNumber := big.NewInt(0).SetBytes(iv)
-        one := big.NewInt(1)
-    
-        i := 0
-        for ; i < len(cipherTmp)-a.len; i += a.len {
-            a.encryptBlock(ivTmp, a.roundKeys)
-            Xor(cipherTmp[i:i+a.len], ivTmp)
-            ivNumber.Add(ivNumber, one).FillBytes(ivTmp)
+        output := bytes.NewBuffer(nil)
+        err := pubKeyIO(rsas.pubkey, bytes.NewReader(input), output, true)
+        if err != nil {
+            return []byte(""), err
         }
-        a.encryptBlock(ivTmp, a.roundKeys)
-        Xor(cipherTmp[i:], ivTmp)
-
-        return cipherTmp
+        return ioutil.ReadAll(output)
     }
+
+    func (rsas *RSASecurity) PubKeyDECRYPT(input []byte) ([]byte, error) {
+        if rsas.pubkey == nil {
+            return []byte(""), errors.New(`Please set the public key in advance`)
+        }
+        output := bytes.NewBuffer(nil)
+        err := pubKeyIO(rsas.pubkey, bytes.NewReader(input), output, false)
+        if err != nil {
+            return []byte(""), err
+        }
+        return ioutil.ReadAll(output)
+    }
+
+    func (rsas *RSASecurity) PriKeyENCTYPT(input []byte) ([]byte, error) {
+        if rsas.prikey == nil {
+            return []byte(""), errors.New(`Please set the private key in advance`)
+        }
+        output := bytes.NewBuffer(nil)
+        err := priKeyIO(rsas.prikey, bytes.NewReader(input), output, true)
+        if err != nil {
+            return []byte(""), err
+        }
+        return ioutil.ReadAll(output)
+    }
+
+    func (rsas *RSASecurity) PriKeyDECRYPT(input []byte) ([]byte, error) {
+        if rsas.prikey == nil {
+            return []byte(""), errors.New(`Please set the private key in advance`)
+        }
+        output := bytes.NewBuffer(nil)
+        err := priKeyIO(rsas.prikey, bytes.NewReader(input), output, false)
+        if err != nil {
+            return []byte(""), err
+        }
+
+        return ioutil.ReadAll(output)
+    }
+
+    func PublicEncrypt(data, publicKey string) (string, error) {
+
+        grsa := RSASecurity{}
+        grsa.SetPublicKey(publicKey)
+
+        rsadata, err := grsa.PubKeyENCTYPT([]byte(data))
+        if err != nil {
+            return "", err
+        }
+
+        return base64.StdEncoding.EncodeToString(rsadata), nil
+    }
+
+    func PriKeyEncrypt(data, privateKey string) (string, error) {
+
+        grsa := RSASecurity{}
+        grsa.SetPrivateKey(privateKey)
+
+        rsadata, err := grsa.PriKeyENCTYPT([]byte(data))
+        if err != nil {
+            return "", err
+        }
+
+        return base64.StdEncoding.EncodeToString(rsadata), nil
+    }
+
+    func PublicDecrypt(data, publicKey string) (string, error) {
+
+        databs, _ := base64.StdEncoding.DecodeString(data)
+
+        grsa := RSASecurity{}
+        if err := grsa.SetPublicKey(publicKey); err != nil {
+            return "", err
+        }
+
+        rsadata, err := grsa.PubKeyDECRYPT(databs)
+        if err != nil {
+            return "", err
+        }
+        return string(rsadata), nil
+    }
+
+    func PriKeyDecrypt(data, privateKey string) (string, error) {
+
+        databs, _ := base64.StdEncoding.DecodeString(data)
+
+        grsa := RSASecurity{}
+
+        if err := grsa.SetPrivateKey(privateKey); err != nil {
+            return "", err
+        }
+
+        rsadata, err := grsa.PriKeyDECRYPT(databs)
+        if err != nil {
+            return "", err
+        }
+
+        return string(rsadata), nil
+    }
+
 
 
 ##### Результати роботи програми
@@ -56,4 +129,4 @@
 ![results](./img/result2.png "Title")
 
 ##### Висновки
-Досліджено принципи роботи симетричного шифрування на прикладі алгоритму AES. Створено програму, яка реалізує алгоритм AES.
+Досліджено і реалізувано механізм асиметричного алгоритму шифрування RSA. Розроблено програму роботи даного алгоритму
