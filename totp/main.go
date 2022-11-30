@@ -30,7 +30,6 @@ func prefix0(otp string) string {
 }
 
 func getHOTPToken(secret string, interval int64) string {
-
 	key, err := base32.StdEncoding.DecodeString(strings.ToUpper(secret))
 	check(err)
 	bs := make([]byte, 8)
