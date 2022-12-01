@@ -1,0 +1,3 @@
+run:
+	gocyclo ./
+	gocritic check ./...
