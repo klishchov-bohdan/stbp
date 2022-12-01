@@ -33,10 +33,11 @@
     run:
       gocyclo ./
       gocritic check ./...
-
+      
 #### Результати аналізу та оцінки коду
 Тепер запустимо програму, ввівши в консолі команду make. Результати gocyclo будуть такими (спочатку йде оцінка, потім назва пакету, назва функції, відносний шлях та строчка в коді):
-    `gocyclo ./
+
+    gocyclo ./
     12 rsa decrypt rsa/rsa_ext.go:234:1
     9 rsa pubKeyDecrypt rsa/rsa_ext.go:172:1
     9 rsa priKeyIO rsa/rsa_ext.go:136:1
@@ -71,15 +72,16 @@
     1 rsa (*RSASecurity).GetPublickey rsa/rsa.go:41:1
     1 rsa (*RSASecurity).GetPrivatekey rsa/rsa.go:37:1
     1 rsa (*RSASecurity).SetPrivateKey rsa/rsa.go:31:1
-    1 rsa (*RSASecurity).SetPublicKey rsa/rsa.go:25:1`
+    1 rsa (*RSASecurity).SetPublicKey rsa/rsa.go:25:1
 Даний застосунок знайшов всі функції та провів їх оцінку. Чим менше оцінка, тим краще розроблена функція. 
 
 Результат роботи додатку gocritic показано нижче (спочатку йде назва та роздашування файлу, потім пояснення, що можна спростити):
-    `gocritic check ./...
+
+    gocritic check ./...
     ./rsa/rsa_ext.go:61:3: assignOp: replace "k = k - 11" with "k -= 11"
     ./rsa/rsa_ext.go:82:3: assignOp: replace "k = k - 11" with "k -= 11"
     ./rsa/rsa_ext.go:103:3: assignOp: replace "k = k - 11" with "k -= 11"
-    ./rsa/rsa_ext.go:139:3: assignOp: replace "k = k - 11" with "k -= 11"`
+    ./rsa/rsa_ext.go:139:3: assignOp: replace "k = k - 11" with "k -= 11"
 
 #### Висновки
 Досліджено алгоритми визначення якості коду
